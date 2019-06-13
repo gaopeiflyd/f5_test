@@ -1,0 +1,65 @@
+{
+    "$schema": "https://raw.githubusercontent.com/F5Networks/f5-appsvcs-extension/master/schema/latest/as3-schema-3.11.0-3.json",
+    "class": "AS3",
+    "action": "deploy",
+    "persist": true,
+    "declaration": {
+        "class": "ADC",
+        "schemaVersion": "3.0.0",
+        "label": "Sample_canary",
+        "remark": "Sample_canary base Header",
+        "DevOps_Demo": {
+            "class": "Tenant",
+            "A1": {
+                "class": "Application",
+                "template": "http",
+                "serviceMain": {
+                    "class": "Service_HTTP",
+                    "virtualAddresses": [
+                        "172.16.81.100"
+                    ],
+                    "pool": "blue_pool",
+                    "iRules": [
+                        "canary_irule"
+                    ],
+                    "profileTCP": {
+                        "bigip": "/Common/tcp"
+                    }
+                },
+                "blue_pool": {
+                    "class": "Pool",
+                    "monitors": [
+                        "http"
+                    ],
+                    "members": [
+                        {
+                            "servicePort": 8001,
+                            "serverAddresses": [
+                                "172.16.81.10"
+                            ]
+                        }
+                    ]
+                },
+                "green_pool": {
+                    "class": "Pool",
+                    "monitors": [
+                        "http"
+                    ],
+                    "members": [
+                        {
+                            "servicePort": 8002,
+                            "serverAddresses": [
+                                "172.16.81.10"
+                            ]
+                        }
+                    ]
+                },
+                "canary_irule": {
+                    "class": "iRule",
+                    "remark": "choose private pool based on IP",
+                    "iRule": "when HTTP_REQUEST {\nif {[HTTP::header \"User-Agent\"] contains \"Firefox\"} {\n pool `*green_pool`\n }\n}"
+                }
+            }
+        }
+    }
+}
